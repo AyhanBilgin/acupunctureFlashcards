@@ -7,9 +7,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     
-<!-- Logo ve Favicon Bağlantıları -->
-<link rel="icon" type="image/png" sizes="512x512" href="flashcardLogo-512x512.png">
-<link rel="apple-touch-icon" href="flashcardLogo-512x512.png">
+    <!-- Logo ve Favicon Bağlantıları -->
+    <link rel="icon" type="image/png" sizes="512x512" href="flashcardLogo-512x512.png">
+    <link rel="apple-touch-icon" href="flashcardLogo-512x512.png">
 
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -50,7 +50,6 @@
             gap: 8px;
         }
 
-        /* Başlık içi logo stili */
         .header-logo {
             width: 36px;
             height: 36px;
@@ -153,7 +152,27 @@
             cursor: pointer;
         }
 
-        /* Mobil & Tablet Uyumlu Kontrol Alanı (Arama ve Sıralama) */
+        /* Test Başlat Butonu */
+        .btn-test {
+            background-color: #8e44ad;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);
+            transition: transform 0.2s, background-color 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .btn-test:hover {
+            background-color: #732d91;
+            transform: translateY(-2px);
+        }
+
+        /* Kontrol Alanı (Arama ve Sıralama) */
         .controls-container {
             width: 100%;
             max-width: 1000px;
@@ -194,7 +213,7 @@
             white-space: nowrap;
         }
 
-        /* Responsive Grid (Mobil, Tablet, Masaüstü Uyumlu) */
+        /* Grid Yapısı */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -266,7 +285,6 @@
             transform: rotateY(180deg);
         }
 
-        /* Noktaları alt alta düzenli gösteren stiller */
         .card-back .points-container {
             display: flex;
             flex-direction: column;
@@ -311,12 +329,12 @@
         .btn-action.edit { color: var(--edit-color); }
         .btn-action.delete { color: var(--danger-color); }
 
-        /* Modal */
+        /* Modal & Test Ekranı */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             z-index: 100;
             justify-content: center;
             align-items: center;
@@ -331,7 +349,50 @@
             max-width: 450px;
         }
 
-        /* Tablet ve daha geniş ekranlar için medya sorgusu */
+        /* Test Ekranı Özel Stilleri */
+        .test-modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .test-card-wrapper {
+            width: 100%;
+            height: 220px;
+            margin: 15px 0;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-next {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-close-test {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+        }
+
         @media (min-width: 600px) {
             body { padding: 25px; }
             h1 { font-size: 1.8rem; }
@@ -351,12 +412,15 @@
     </h1>
     <div class="subtitle">Tedavi noktaları eğitim portalı</div>
 
+    <!-- Rastgele Test Başlat Butonu -->
+    <button class="btn-test" onclick="startRandomTest()">🎲 Rastgele Test Modu Başlat</button>
+
     <!-- Admin Giriş Butonu -->
     <div class="admin-login-bar" id="adminLoginBar">
         <button class="btn-link" onclick="loginAdmin()">🔑 Yönetici Paneli Girişi</button>
     </div>
 
-    <!-- Admin Panel / Yeni Kart Ekleme (Üst Kısım) -->
+    <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel">
         <h2>
             <span>➕ Yeni Kart Ekle</span>
@@ -373,7 +437,7 @@
         <button class="btn-add" onclick="addNewCard()">Veritabanına Kart Ekle</button>
     </div>
 
-    <!-- Arama ve A-Z Sıralama Alanı -->
+    <!-- Arama ve Sıralama -->
     <div class="controls-container">
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="🔍 Ara (Rahatsızlık veya nokta adı)..." oninput="filterAndRenderCards()">
@@ -388,7 +452,7 @@
         </div>
     </div>
 
-    <!-- Kart Listesi Grid -->
+    <!-- Kart Grid -->
     <div class="grid" id="flashcardGrid"></div>
 
     <!-- Düzenleme Modalı -->
@@ -409,23 +473,49 @@
         </div>
     </div>
 
+    <!-- Rastgele Test Modalı -->
+    <div class="modal" id="testModal">
+        <div class="test-modal-content">
+            <h3 style="margin:0; color:var(--primary-color);">🎲 Rastgele Çalışma Modu</h3>
+            <div id="testProgress" style="font-size:0.85rem; color:#7f8c8d; margin-top:4px;">Kart 1 / 10</div>
+            
+            <div class="test-card-wrapper">
+                <div class="card" id="testCard" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3 id="testIndication">...</h3>
+                            <span>Noktaları Göster</span>
+                        </div>
+                        <div class="card-back">
+                            <div class="points-container" id="testPoints">...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <button class="btn-close-test" onclick="closeTestModal()">Bitir</button>
+                <button class="btn-next" onclick="nextTestCard()">Sonraki Kart ➡️</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://erfyniehogwftgvxcufn.supabase.co';
-        // Supabase Publishable Key'inizi buraya girin:
         const SUPABASE_ANON_KEY = 'sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
         const ADMIN_PASSWORD = '1234';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let localCardsData = []; // Veritabanından gelen veriyi saklar
+        let localCardsData = [];
+        let shuffledTestCards = [];
+        let currentTestIndex = 0;
 
-        // Service Worker (PWA)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
-        // Veritabanından Tüm Kartları Çekme
         async function fetchCards() {
             const { data, error } = await supabaseClient
                 .from('flashcards')
@@ -440,19 +530,16 @@
             filterAndRenderCards();
         }
 
-        // Arama ve A-Z Sıralama İşlemi
         function filterAndRenderCards() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
             const sortOrder = document.getElementById('sortSelect').value;
 
-            // 1. Filtreleme (Endikasyon veya Noktalar içerisinde arama yapar)
             let result = localCardsData.filter(item => {
                 const matchIndication = item.indication ? item.indication.toLowerCase().includes(searchQuery) : false;
                 const matchPoints = item.points ? item.points.toLowerCase().includes(searchQuery) : false;
                 return matchIndication || matchPoints;
             });
 
-            // 2. Sıralama
             if (sortOrder === 'asc') {
                 result.sort((a, b) => (a.indication || '').localeCompare(b.indication || '', 'tr'));
             } else if (sortOrder === 'desc') {
@@ -461,14 +548,10 @@
                 result.sort((a, b) => b.id - a.id);
             }
 
-            // Kart Sayısını Güncelle
             document.getElementById('cardCount').innerText = `${result.length} Kart`;
-
-            // Ekrana Çizdir
             renderCards(result);
         }
 
-        // Kartları HTML Olarak Çizdirme
         function renderCards(cards) {
             const grid = document.getElementById('flashcardGrid');
             grid.innerHTML = '';
@@ -482,7 +565,6 @@
                 const card = document.createElement('div');
                 card.className = 'card';
 
-                // Noktaları virgülle ayırıp alt alta liste öğeleri haline getirme
                 const pointsList = item.points 
                     ? item.points.split(',').map(pt => `<div class="point-item">• ${pt.trim()}</div>`).join('') 
                     : '';
@@ -514,7 +596,50 @@
             return text ? text.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
         }
 
-        // Admin Yönetimi
+        /* --- Rastgele Test Mantığı --- */
+        function startRandomTest() {
+            if (localCardsData.length === 0) {
+                alert("Henüz test edilecek kart yok!");
+                return;
+            }
+            // Kartları rastgele karıştır (Fisher-Yates Shuffle)
+            shuffledTestCards = [...localCardsData].sort(() => Math.random() - 0.5);
+            currentTestIndex = 0;
+            
+            document.getElementById('testModal').style.display = 'flex';
+            showTestCard();
+        }
+
+        function showTestCard() {
+            const testCardElem = document.getElementById('testCard');
+            testCardElem.classList.remove('flipped'); // Kartı ön yüze getir
+
+            const current = shuffledTestCards[currentTestIndex];
+            document.getElementById('testIndication').innerText = current.indication;
+            
+            const pointsList = current.points 
+                ? current.points.split(',').map(pt => `<div class="point-item">• ${pt.trim()}</div>`).join('') 
+                : '';
+            document.getElementById('testPoints').innerHTML = pointsList;
+            
+            document.getElementById('testProgress').innerText = `Kart ${currentTestIndex + 1} / ${shuffledTestCards.length}`;
+        }
+
+        function nextTestCard() {
+            if (currentTestIndex < shuffledTestCards.length - 1) {
+                currentTestIndex++;
+                showTestCard();
+            } else {
+                alert("🎉 Tebrikler! Tüm kartları tamamladınız.");
+                closeTestModal();
+            }
+        }
+
+        function closeTestModal() {
+            document.getElementById('testModal').style.display = 'none';
+        }
+
+        /* Admin Yönetimi */
         function loginAdmin() {
             const password = prompt("Lütfen Yönetici Parolasını Giriniz:");
             if (password === ADMIN_PASSWORD) {
@@ -546,7 +671,7 @@
             setAdminUI(true);
         }
 
-        // CRUD İşlemleri
+        /* CRUD İşlemleri */
         async function addNewCard() {
             const indication = document.getElementById('indication').value.trim();
             const points = document.getElementById('points').value.trim();
@@ -621,7 +746,6 @@
             fetchCards();
         }
 
-        // Anlık Güncelleme (Real-time)
         supabaseClient
             .channel('public:flashcards')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => {
@@ -629,7 +753,6 @@
             })
             .subscribe();
 
-        // Başlangıçta verileri çek
         fetchCards();
     </script>
 </body>
