@@ -44,6 +44,17 @@
             margin: 10px 0 5px 0;
             text-align: center;
             font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Başlık içi logo stili */
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
         }
 
         .subtitle {
@@ -324,6 +335,7 @@
         @media (min-width: 600px) {
             body { padding: 25px; }
             h1 { font-size: 1.8rem; }
+            .header-logo { width: 42px; height: 42px; }
             .subtitle { font-size: 1rem; }
             .controls-container { flex-direction: row; align-items: center; }
             .search-box { flex: 2; }
@@ -333,7 +345,10 @@
 </head>
 <body>
 
-    <h1>🧠 Akupunktur Flashcard</h1>
+    <h1>
+        <img src="flashcardLogo-512x512.png" alt="Akupunktur Logo" class="header-logo">
+        <span>Akupunktur Flashcard</span>
+    </h1>
     <div class="subtitle">Tedavi noktaları eğitim portalı</div>
 
     <!-- Admin Giriş Butonu -->
