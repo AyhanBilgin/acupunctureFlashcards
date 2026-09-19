@@ -552,6 +552,7 @@
             renderCards(result);
         }
 
+        // Düzeltilmiş Render Fonksiyonu
         function renderCards(cards) {
             const grid = document.getElementById('flashcardGrid');
             grid.innerHTML = '';
@@ -565,18 +566,19 @@
                 const card = document.createElement('div');
                 card.className = 'card';
 
+                // Noktaları hem virgüle hem de tireye göre bölüp temiz HTML elemanları haline getiriyoruz
                 const pointsList = item.points 
-                    ? item.points.split(',').map(pt => `<div class="point-item">• ${pt.trim()}</div>`).join('') 
+                    ? item.points.split(/[,,-]/).map(pt => pt.trim()).filter(pt => pt.length > 0).map(pt => `<div class="point-item">• ${pt}</div>`).join('') 
                     : '';
 
                 card.innerHTML = `
                     <div class="card-actions">
-                        <button class="btn-action edit" onclick="openEditModal(${item.id}, '${escapeHtml(item.indication)}', '${escapeHtml(item.points)}')">✏️</button>
-                        <button class="btn-action delete" onclick="deleteCard(${item.id})">🗑️</button>
+                        <button class="btn-action edit" data-id="${item.id}">✏️</button>
+                        <button class="btn-action delete" data-id="${item.id}">🗑️</button>
                     </div>
                     <div class="card-inner" onclick="toggleCard(this)">
                         <div class="card-front">
-                            <h3>${item.indication}</h3>
+                            <h3>${escapeHtml(item.indication)}</h3>
                             <span>Noktaları Göster</span>
                         </div>
                         <div class="card-back">
@@ -584,6 +586,25 @@
                         </div>
                     </div>
                 `;
+
+                // Admin butonları için event listener bağlama (tırnak işareti hatalarını engeller)
+                const editBtn = card.querySelector('.btn-action.edit');
+                const deleteBtn = card.querySelector('.btn-action.delete');
+
+                if (editBtn) {
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openEditModal(item.id, item.indication, item.points);
+                    };
+                }
+
+                if (deleteBtn) {
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteCard(item.id);
+                    };
+                }
+
                 grid.appendChild(card);
             });
         }
@@ -593,7 +614,13 @@
         }
 
         function escapeHtml(text) {
-            return text ? text.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         /* --- Rastgele Test Mantığı --- */
@@ -602,7 +629,6 @@
                 alert("Henüz test edilecek kart yok!");
                 return;
             }
-            // Kartları rastgele karıştır (Fisher-Yates Shuffle)
             shuffledTestCards = [...localCardsData].sort(() => Math.random() - 0.5);
             currentTestIndex = 0;
             
@@ -612,13 +638,13 @@
 
         function showTestCard() {
             const testCardElem = document.getElementById('testCard');
-            testCardElem.classList.remove('flipped'); // Kartı ön yüze getir
+            testCardElem.classList.remove('flipped');
 
             const current = shuffledTestCards[currentTestIndex];
             document.getElementById('testIndication').innerText = current.indication;
             
             const pointsList = current.points 
-                ? current.points.split(',').map(pt => `<div class="point-item">• ${pt.trim()}</div>`).join('') 
+                ? current.points.split(/[,,-]/).map(pt => pt.trim()).filter(pt => pt.length > 0).map(pt => `<div class="point-item">• ${pt}</div>`).join('') 
                 : '';
             document.getElementById('testPoints').innerHTML = pointsList;
             
