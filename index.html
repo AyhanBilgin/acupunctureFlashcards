@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akupunktur Flashcard Eğitim Uygulaması</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #16a085;
+            --bg-color: #f5f6fa;
+            --text-color: #333;
+            --danger-color: #e74c3c;
+            --edit-color: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px 0;
+        }
+
+        .card {
+            background-color: transparent;
+            height: 220px;
+            perspective: 1000px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card-front {
+            background-color: white;
+            color: var(--primary-color);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .card-front h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .card-front span {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-back {
+            background-color: var(--accent-color);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .card-back p {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Admin Aksiyon Butonları */
+        .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+            display: none;
+            gap: 5px;
+        }
+
+        .admin-active .card-actions {
+            display: flex;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-action.edit { color: var(--edit-color); }
+        .btn-action.delete { color: var(--danger-color); }
+
+        /* Admin Giriş & Panel Stilleri */
+        .admin-login-bar { 
+            margin-bottom: 20px; 
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .admin-panel {
+            display: none;
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+            border: 2px solid var(--accent-color);
+        }
+
+        .admin-panel h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+
+        .btn-add { background-color: var(--accent-color); color: white; }
+        .btn-add:hover { background-color: #148f77; }
+
+        .btn-logout {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+            margin: 0;
+        }
+
+        /* Modal (Düzenleme Penceresi) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🧠 Akupunktur Flashcard Eğitim Portalı</h1>
+    <div class="subtitle">Kartların üzerine tıklayarak tedavi noktalarını görebilirsiniz. Ortak veritabanı üzerinden yönetilmektedir.</div>
+
+    <!-- Admin Giriş Butonu (En Üstte) -->
+    <div class="admin-login-bar" id="adminLoginBar">
+        <button class="btn-link" onclick="loginAdmin()">🔑 Yönetici Paneli Girişi</button>
+    </div>
+
+    <!-- Admin Panel / Yeni Kart Ekleme (En Üstte) -->
+    <div class="admin-panel" id="adminPanel">
+        <h2>
+            <span>➕ Yeni Kart Ekle</span>
+            <button class="btn-logout" onclick="logoutAdmin()">Çıkış Yap</button>
+        </h2>
+        <div class="form-group">
+            <label for="indication">Endikasyon / Rahatsızlık:</label>
+            <input type="text" id="indication" placeholder="Örn: Migren, Bel Ağrısı...">
+        </div>
+        <div class="form-group">
+            <label for="points">Uygulanacak Akupunktur Noktaları:</label>
+            <input type="text" id="points" placeholder="Örn: LI4, LV3, GB20, EX-HN5...">
+        </div>
+        <button class="btn-add" onclick="addNewCard()">Veritabanına Kart Ekle</button>
+    </div>
+
+    <!-- Kart Listesi Grid -->
+    <div class="grid" id="flashcardGrid">
+        <!-- Kartlar Supabase üzerinden dinamik yüklenecek -->
+    </div>
+
+    <!-- Düzenleme Modalı -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>✏️ Kartı Düzenle</h2>
+            <input type="hidden" id="editCardId">
+            <div class="form-group">
+                <label for="editIndication">Endikasyon:</label>
+                <input type="text" id="editIndication">
+            </div>
+            <div class="form-group">
+                <label for="editPoints">Noktalar:</label>
+                <input type="text" id="editPoints">
+            </div>
+            <button class="btn-add" onclick="saveEditCard()">Kaydet</button>
+            <button class="btn-logout" style="width:100%; margin-top:8px;" onclick="closeEditModal()">İptal</button>
+        </div>
+    </div>
+
+    <script>
+        // --- KONFİGÜRASYON BİLGİLERİ ---
+        const SUPABASE_URL = 'https://erfyniehogwftgvxcufn.supabase.co';
+        
+        // Supabase panelinden kopyaladığınız 'Publishable Key'i aşağıdaki tırnak arasına yapıştırın:
+        const SUPABASE_ANON_KEY = 'sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
+        
+        const ADMIN_PASSWORD = '1234'; // Giriş şifreniz
+
+        // Supabase Bağlantısı
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker kayıtlı:', reg))
+                    .catch(err => console.log('Service Worker hatası:', err));
+            });
+        }
+
+        // Kartları Veritabanından Çekme
+        async function fetchCards() {
+            const { data, error } = await supabaseClient
+                .from('flashcards')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error('Veri çekme hatası:', error);
+                return;
+            }
+
+            renderCards(data);
+        }
+
+        // Kartları Ekrana Basma
+        function renderCards(cards) {
+            const grid = document.getElementById('flashcardGrid');
+            grid.innerHTML = '';
+            
+            if (!cards || cards.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:#7f8c8d;">Henüz eklenmiş kart bulunmuyor.</p>';
+                return;
+            }
+
+            cards.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                card.innerHTML = `
+                    <div class="card-actions">
+                        <button class="btn-action edit" onclick="openEditModal(${item.id}, '${escapeHtml(item.indication)}', '${escapeHtml(item.points)}')">✏️</button>
+                        <button class="btn-action delete" onclick="deleteCard(${item.id})">🗑️</button>
+                    </div>
+                    <div class="card-inner" onclick="toggleCard(this)">
+                        <div class="card-front">
+                            <h3>${item.indication}</h3>
+                            <span>Noktaları Göster</span>
+                        </div>
+                        <div class="card-back">
+                            <p>${item.points}</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleCard(cardInner) {
+            cardInner.parentElement.classList.toggle('flipped');
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // --- ADMIN İŞLEMLERİ ---
+        function loginAdmin() {
+            const password = prompt("Lütfen Yönetici Parolasını Giriniz:");
+            if (password === ADMIN_PASSWORD) {
+                setAdminUI(true);
+                sessionStorage.setItem('isAdmin', 'true');
+            } else if (password !== null) {
+                alert("Hatalı Parola!");
+            }
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('isAdmin');
+            setAdminUI(false);
+        }
+
+        function setAdminUI(isAdmin) {
+            if (isAdmin) {
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('adminLoginBar').style.display = 'none';
+                document.body.classList.add('admin-active');
+            } else {
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('adminLoginBar').style.display = 'block';
+                document.body.classList.remove('admin-active');
+            }
+        }
+
+        // Oturum durumunu hatırla
+        if (sessionStorage.getItem('isAdmin') === 'true') {
+            setAdminUI(true);
+        }
+
+        // --- VERİTABANI İŞLEMLERİ (CRUD) ---
+
+        // 1. Yeni Kart Ekle
+        async function addNewCard() {
+            const indicationInput = document.getElementById('indication');
+            const pointsInput = document.getElementById('points');
+
+            const indication = indicationInput.value.trim();
+            const points = pointsInput.value.trim();
+
+            if (!indication || !points) {
+                alert('Lütfen tüm alanları doldurun.');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('flashcards')
+                .insert([{ indication, points }]);
+
+            if (error) {
+                alert('Ekleme hatası: ' + error.message);
+                return;
+            }
+
+            indicationInput.value = '';
+            pointsInput.value = '';
+            fetchCards();
+        }
+
+        // 2. Kart Sil
+        async function deleteCard(id) {
+            if (!confirm("Bu kartı silmek istediğinize emin misiniz?")) return;
+
+            const { error } = await supabaseClient
+                .from('flashcards')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert('Silme hatası: ' + error.message);
+                return;
+            }
+
+            fetchCards();
+        }
+
+        // 3. Düzenleme Modalı Aç/Kapat
+        function openEditModal(id, indication, points) {
+            document.getElementById('editCardId').value = id;
+            document.getElementById('editIndication').value = indication;
+            document.getElementById('editPoints').value = points;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // 4. Kart Güncelle
+        async function saveEditCard() {
+            const id = document.getElementById('editCardId').value;
+            const indication = document.getElementById('editIndication').value.trim();
+            const points = document.getElementById('editPoints').value.trim();
+
+            if (!indication || !points) {
+                alert('Lütfen tüm alanları doldurun.');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('flashcards')
+                .update({ indication, points })
+                .eq('id', id);
+
+            if (error) {
+                alert('Güncelleme hatası: ' + error.message);
+                return;
+            }
+
+            closeEditModal();
+            fetchCards();
+        }
+
+        // Real-time (Anlık Güncelleme)
+        supabaseClient
+            .channel('public:flashcards')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => {
+                fetchCards();
+            })
+            .subscribe();
+
+        // Sayfa açıldığında kartları getir
+        fetchCards();
+    </script>
+
+</body>
+</html>

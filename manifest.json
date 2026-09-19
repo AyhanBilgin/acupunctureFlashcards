@@ -1,0 +1,20 @@
+{
+  "short_name": "AkupunkturFlash",
+  "name": "Akupunktur Flashcard Eğitim Portalı",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f5f6fa",
+  "theme_color": "#2c3e50",
+  "display": "standalone"
+}
