@@ -7,6 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     
+    <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -17,6 +18,10 @@
             --text-color: #333;
             --danger-color: #e74c3c;
             --edit-color: #f39c12;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -32,7 +37,7 @@
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 5px;
+            margin: 10px 0 5px 0;
             text-align: center;
             font-size: 1.5rem;
         }
@@ -45,14 +50,102 @@
             font-size: 0.9rem;
         }
 
-        /* Arama ve Filtreleme Alanı */
-        .filter-container {
+        /* Admin Giriş & Panel */
+        .admin-login-bar { 
+            margin-bottom: 15px; 
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .admin-panel {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             width: 100%;
             max-width: 600px;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .admin-panel h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group { 
+            margin-bottom: 12px; 
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent-color);
+        }
+
+        button.btn-add {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: var(--accent-color);
+            color: white;
+            transition: background 0.2s;
+        }
+
+        button.btn-add:hover {
+            background-color: #148f77;
+        }
+
+        .btn-logout {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Mobil & Tablet Uyumlu Kontrol Alanı (Arama ve Sıralama) */
+        .controls-container {
+            width: 100%;
+            max-width: 1000px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .search-box {
@@ -61,55 +154,43 @@
         }
 
         .search-box input {
-            width: 100%;
-            padding: 12px 15px;
             border: 2px solid #ddd;
             border-radius: 25px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
+            padding-left: 15px;
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
 
-        .search-box input:focus {
-            border-color: var(--accent-color);
-        }
-
-        .filter-controls {
+        .filter-options {
             display: flex;
             gap: 10px;
             justify-content: space-between;
+            align-items: center;
         }
 
-        .filter-controls select {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            background: white;
-            font-size: 0.9rem;
-            outline: none;
-            flex: 1;
+        .filter-options select {
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
 
         .card-count {
-            text-align: center;
             font-size: 0.85rem;
             color: #7f8c8d;
-            margin-top: -10px;
-            margin-bottom: 15px;
+            white-space: nowrap;
         }
 
+        /* Responsive Grid (Mobil, Tablet, Masaüstü Uyumlu) */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 15px;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1000px;
         }
 
         .card {
             background-color: transparent;
-            height: 200px;
+            height: 190px;
             perspective: 1000px;
             cursor: pointer;
             position: relative;
@@ -142,7 +223,6 @@
             justify-content: center;
             border-radius: 12px;
             padding: 15px;
-            box-sizing: border-box;
         }
 
         .card-front {
@@ -153,7 +233,8 @@
 
         .card-front h3 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
+            word-break: break-word;
         }
 
         .card-front span {
@@ -171,12 +252,14 @@
         }
 
         .card-back p {
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 500;
             margin: 0;
             line-height: 1.4;
+            word-break: break-word;
         }
 
+        /* Admin Kart Butonları */
         .card-actions {
             position: absolute;
             top: 8px;
@@ -202,81 +285,7 @@
         .btn-action.edit { color: var(--edit-color); }
         .btn-action.delete { color: var(--danger-color); }
 
-        .admin-login-bar { margin-bottom: 15px; }
-
-        .btn-link {
-            background: none;
-            border: none;
-            color: #7f8c8d;
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-
-        .admin-panel {
-            display: none;
-            background-color: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            border: 2px solid var(--accent-color);
-        }
-
-        .admin-panel h2 {
-            margin-top: 0;
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            border-bottom: 2px solid var(--bg-color);
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .form-group { margin-bottom: 12px; }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 9px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-
-        button.btn-add {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            cursor: pointer;
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-logout {
-            background-color: var(--danger-color);
-            color: white;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -285,28 +294,39 @@
             z-index: 100;
             justify-content: center;
             align-items: center;
+            padding: 15px;
         }
 
         .modal-content {
             background: white;
             padding: 20px;
             border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* Tablet ve daha geniş ekranlar için medya sorgusu */
+        @media (min-width: 600px) {
+            body { padding: 25px; }
+            h1 { font-size: 1.8rem; }
+            .subtitle { font-size: 1rem; }
+            .controls-container { flex-direction: row; align-items: center; }
+            .search-box { flex: 2; }
+            .filter-options { flex: 1; }
         }
     </style>
 </head>
 <body>
 
     <h1>🧠 Akupunktur Flashcard</h1>
-    <div class="subtitle">Tedavi noktaları portali</div>
+    <div class="subtitle">Tedavi noktaları eğitim portalı</div>
 
     <!-- Admin Giriş Butonu -->
     <div class="admin-login-bar" id="adminLoginBar">
-        <button class="btn-link" onclick="loginAdmin()">🔑 Yönetici Girişi</button>
+        <button class="btn-link" onclick="loginAdmin()">🔑 Yönetici Paneli Girişi</button>
     </div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Panel / Yeni Kart Ekleme (Üst Kısım) -->
     <div class="admin-panel" id="adminPanel">
         <h2>
             <span>➕ Yeni Kart Ekle</span>
@@ -317,29 +337,28 @@
             <input type="text" id="indication" placeholder="Örn: Migren, Bel Ağrısı...">
         </div>
         <div class="form-group">
-            <label for="points">Noktalar:</label>
-            <input type="text" id="points" placeholder="Örn: LI4, LV3, GB20...">
+            <label for="points">Uygulanacak Akupunktur Noktaları:</label>
+            <input type="text" id="points" placeholder="Örn: LI4, LV3, GB20, EX-HN5...">
         </div>
-        <button class="btn-add" onclick="addNewCard()">Veritabanına Ekle</button>
+        <button class="btn-add" onclick="addNewCard()">Veritabanına Kart Ekle</button>
     </div>
 
-    <!-- Arama ve Sıralama Kontrolleri -->
-    <div class="filter-container">
+    <!-- Arama ve A-Z Sıralama Alanı -->
+    <div class="controls-container">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Rahatsızlık veya nokta ara (Örn: Migren, LI4)..." oninput="filterCards()">
+            <input type="text" id="searchInput" placeholder="🔍 Ara (Rahatsızlık veya nokta adı)..." oninput="filterAndRenderCards()">
         </div>
-        <div class="filter-controls">
-            <select id="sortSelect" onchange="filterCards()">
-                <option value="asc">Sıralama: A'dan Z'ye</option>
-                <option value="desc">Sıralama: Z'den A'ya</option>
+        <div class="filter-options">
+            <select id="sortSelect" onchange="filterAndRenderCards()">
+                <option value="asc">A'dan Z'ye Sırala</option>
+                <option value="desc">Z'den A'ya Sırala</option>
                 <option value="newest">En Yeni Eklenenler</option>
             </select>
+            <div class="card-count" id="cardCount">0 Kart</div>
         </div>
     </div>
 
-    <div class="card-count" id="cardCount">Yükleniyor...</div>
-
-    <!-- Grid Listesi -->
+    <!-- Kart Listesi Grid -->
     <div class="grid" id="flashcardGrid"></div>
 
     <!-- Düzenleme Modalı -->
@@ -362,70 +381,77 @@
 
     <script>
         const SUPABASE_URL = 'https://erfyniehogwftgvxcufn.supabase.co';
+        // Supabase Publishable Key'inizi buraya girin:
         const SUPABASE_ANON_KEY = 'sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
         const ADMIN_PASSWORD = '1234';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let allCards = []; // Tüm veriyi hafızada tutacağız
+        let localCardsData = []; // Veritabanından gelen veriyi saklar
 
+        // Service Worker (PWA)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
+        // Veritabanından Tüm Kartları Çekme
         async function fetchCards() {
             const { data, error } = await supabaseClient
                 .from('flashcards')
                 .select('*');
 
             if (error) {
-                console.error('Veri hatası:', error);
+                console.error('Veri çekme hatası:', error);
                 return;
             }
 
-            allCards = data || [];
-            filterCards();
+            localCardsData = data || [];
+            filterAndRenderCards();
         }
 
-        function filterCards() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const sortVal = document.getElementById('sortSelect').value;
+        // Arama ve A-Z Sıralama İşlemi
+        function filterAndRenderCards() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            const sortOrder = document.getElementById('sortSelect').value;
 
-            // 1. Arama Filtresi (Hem rahatsızlık adında hem de noktaların içinde arar)
-            let filtered = allCards.filter(item => {
-                const matchIndication = item.indication ? item.indication.toLowerCase().includes(query) : false;
-                const matchPoints = item.points ? item.points.toLowerCase().includes(query) : false;
+            // 1. Filtreleme (Endikasyon veya Noktalar içerisinde arama yapar)
+            let result = localCardsData.filter(item => {
+                const matchIndication = item.indication ? item.indication.toLowerCase().includes(searchQuery) : false;
+                const matchPoints = item.points ? item.points.toLowerCase().includes(searchQuery) : false;
                 return matchIndication || matchPoints;
             });
 
-            // 2. Sıralama Mantığı
-            if (sortVal === 'asc') {
-                filtered.sort((a, b) => a.indication.localeCompare(b.indication, 'tr'));
-            } else if (sortVal === 'desc') {
-                filtered.sort((a, b) => b.indication.localeCompare(a.indication, 'tr'));
-            } else if (sortVal === 'newest') {
-                filtered.sort((a, b) => b.id - a.id);
+            // 2. Sıralama
+            if (sortOrder === 'asc') {
+                result.sort((a, b) => (a.indication || '').localeCompare(b.indication || '', 'tr'));
+            } else if (sortOrder === 'desc') {
+                result.sort((a, b) => (b.indication || '').localeCompare(a.indication || '', 'tr'));
+            } else if (sortOrder === 'newest') {
+                result.sort((a, b) => b.id - a.id);
             }
 
-            // Sayı Güncelleme
-            document.getElementById('cardCount').innerText = `Toplam ${filtered.length} kart gösteriliyor`;
+            // Kart Sayısını Güncelle
+            document.getElementById('cardCount').innerText = `${result.length} Kart`;
 
-            renderCards(filtered);
+            // Ekrana Çizdir
+            renderCards(result);
         }
 
+        // Kartları HTML Olarak Çizdirme
         function renderCards(cards) {
             const grid = document.getElementById('flashcardGrid');
             grid.innerHTML = '';
 
             if (cards.length === 0) {
-                grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:#7f8c8d;">Sonuç bulunamadı.</p>';
+                grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:#7f8c8d; padding: 20px;">Eşleşen kart bulunamadı.</p>';
                 return;
             }
 
             cards.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
+
                 card.innerHTML = `
                     <div class="card-actions">
                         <button class="btn-action edit" onclick="openEditModal(${item.id}, '${escapeHtml(item.indication)}', '${escapeHtml(item.points)}')">✏️</button>
@@ -453,6 +479,7 @@
             return text ? text.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
         }
 
+        // Admin Yönetimi
         function loginAdmin() {
             const password = prompt("Lütfen Yönetici Parolasını Giriniz:");
             if (password === ADMIN_PASSWORD) {
@@ -484,6 +511,7 @@
             setAdminUI(true);
         }
 
+        // CRUD İşlemleri
         async function addNewCard() {
             const indication = document.getElementById('indication').value.trim();
             const points = document.getElementById('points').value.trim();
@@ -539,6 +567,11 @@
             const indication = document.getElementById('editIndication').value.trim();
             const points = document.getElementById('editPoints').value.trim();
 
+            if (!indication || !points) {
+                alert('Lütfen tüm alanları doldurun.');
+                return;
+            }
+
             const { error } = await supabaseClient
                 .from('flashcards')
                 .update({ indication, points })
@@ -553,6 +586,7 @@
             fetchCards();
         }
 
+        // Anlık Güncelleme (Real-time)
         supabaseClient
             .channel('public:flashcards')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => {
@@ -560,6 +594,7 @@
             })
             .subscribe();
 
+        // Başlangıçta verileri çek
         fetchCards();
     </script>
 </body>
