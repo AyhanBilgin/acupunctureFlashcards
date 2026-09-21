@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akupunktur Klinik Vaka Örnekleri</title>
+
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #16a085;
+            --bg-color: #f5f6fa;
+            --text-color: #333;
+            --card-border: #2980b9;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: #7f8c8d;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover { background: #6c7a7d; }
+
+        h1 { color: var(--primary-color); margin: 0; font-size: 1.6rem; }
+
+        /* Arama Çubuğu */
+        .search-box-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        /* Vaka Ekleme Formu */
+        .add-case-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .add-case-card h3 { 
+            margin-top: 0; 
+            color: var(--primary-color); 
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-group { margin-bottom: 12px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        button.btn-add {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: var(--accent-color);
+            color: white;
+            transition: background 0.2s;
+        }
+
+        button.btn-add:hover { background-color: #148f77; }
+
+        /* Vaka Kartları (Açılır-Kapanır) */
+        .case-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left: 6px solid var(--card-border);
+            overflow: hidden;
+        }
+
+        .case-header {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .case-header:hover {
+            background: #f8f9fa;
+        }
+
+        .case-title {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .toggle-icon {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            transition: transform 0.3s;
+        }
+
+        .case-content {
+            display: none;
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid #f1f1f1;
+        }
+
+        .case-detail { 
+            margin: 10px 0; 
+            font-size: 0.95rem; 
+            line-height: 1.5; 
+        }
+
+        .points-box {
+            background: #eaf2f8;
+            color: #1b4f72;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 0.95rem;
+        }
+
+        .exam-box {
+            background: #fcf3cf;
+            color: #7d6608;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <a href="index.html" class="back-btn">⬅️ Flashcard Sayfasına Dön</a>
+        <h1>📋 Klinik Vaka Örnekleri</h1>
+    </div>
+
+    <!-- Arama Kutusu -->
+    <div class="search-box-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Vaka, semptom, teşhis veya nokta ara..." onkeyup="filterCases()">
+    </div>
+
+    <!-- Yeni Vaka Ekleme Alanı -->
+    <div class="add-case-card">
+        <h3>➕ Yeni Vaka Örneği Paylaş</h3>
+        <div class="form-group">
+            <label for="title">Vaka Başlığı / Rahatsızlık:</label>
+            <input type="text" id="title" placeholder="Örn: Vaka - Şiddetli Migren ve Mide Bulantısı">
+        </div>
+        <div class="form-group">
+            <label for="patient">Hasta Öyküsü / Şikayeti:</label>
+            <textarea id="patient" rows="2" placeholder="Örn: 35 yaşında kadın hasta, stresle artan şakak ağrısı var..."></textarea>
+        </div>
+        
+        <!-- Dil ve Nabız Bulguları -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tongue">👅 Dil Muayenesi:</label>
+                <input type="text" id="tongue" placeholder="Örn: Kırmızı gövde, ince sarı pas">
+            </div>
+            <div class="form-group">
+                <label for="pulse">💓 Nabız Muayenesi:</label>
+                <input type="text" id="pulse" placeholder="Örn: Gergin (Tel gibi / Wiry) ve hızlı">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="diagnosis">TCM / Akupunktur Teşhisi:</label>
+            <input type="text" id="diagnosis" placeholder="Örn: Karaciğer Yang Yükselmesi">
+        </div>
+        <div class="form-group">
+            <label for="points">Uygulanan Noktalar:</label>
+            <input type="text" id="points" placeholder="Örn: LV3, GB20, EX-HN5, LI4">
+        </div>
+        <div class="form-group">
+            <label for="notes">Klinik Notlar / Tedavi Yorumu:</label>
+            <textarea id="notes" rows="2" placeholder="Örn: Dört Kapı noktaları ile Qi akışı düzenlendi..."></textarea>
+        </div>
+        <button class="btn-add" onclick="addNewCase()">Vakayı Veritabanına Ekle</button>
+    </div>
+
+    <!-- Vakaların Listeleneceği Alan -->
+    <div id="caseList">
+        <p style="text-align: center; color: #7f8c8d;">Vakalar yükleniyor...</p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://erfyniehogwftgvxcufn.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allCasesData = []; // Arama filtresi için tüm verileri saklayan dizi
+
+        // Örnek / Varsayılan Vaka Listesi
+        const initialDefaultCases = [
+            {
+                title: "Vaka 1: Şakak Bölgesinde Zonklayıcı Baş Ağrısı (Migren)",
+                patient: "42 yaşında kadın hasta. Yaklaşık 3 aydır özellikle iş stresi arttığında sağ şakak bölgesinde başlayan zonklayıcı baş ağrısı, göz arkasında basınç ve hafif mide bulantısı şikayetiyle başvurdu.",
+                tongue: "Kırmızı gövde, kenarları daha belirgin kırmızı, ince sarı pas.",
+                pulse: "Tel gibi (Wiry / Xian) ve hafif hızlı.",
+                diagnosis: "Karaciğer Yang Yükselmesi (Liver Yang Rising)",
+                points: "LV3 (Taichong), GB20 (Fengchi), EX-HN5 (Taiyang), LI4 (Hegu), GB8 (Shuaigu)",
+                notes: "LV3 ve LI4 noktaları birlikte kullanılarak (Dört Kapı / Four Gates) vücuttaki tıkanmış Qi akışı düzenlendi. Taiyang ve GB20 lokal ağrıyı dindirmek için seçildi."
+            },
+            {
+                title: "Vaka 2: Soğuk Havalarda Artan Bel Ağrısı ve Diz Soğukluğu",
+                patient: "58 yaşında erkek hasta. Kış aylarında belirginleşen belde künt ağrı, dizlerde halsizlik ve genel soğukluk hissi tanımlıyor. Dinlenmekle ağrı hafifliyor fakat uzun süre ayakta kalınca artıyor.",
+                tongue: "Soluk, tombul, kenarlarında diş izleri var, beyaz ıslak pas.",
+                pulse: "Derin (Deep / Chen), yavaş ve zayıf.",
+                diagnosis: "Böbrek Yang Eksikliği (Kidney Yang Deficiency)",
+                points: "BL23 (Shenshu), GV4 (Mingmen), KI3 (Taixi), ST36 (Zusanli), CV4 (Guanyuan)",
+                notes: "BL23 ve GV4 noktalarına Moxa (ısı tedavisi) uygulandı. Böbrek Yang enerjisini ısıtıp güçlendirmek ve alt ısıtıcıyı desteklemek hedeflendi."
+            },
+            {
+                title: "Vaka 3: Sınav Öncesi Uykusuzluk ve Çarpıntı",
+                patient: "24 yaşında üniversite öğrencisi. Sınav dönemlerinde gece uykuya dalmakta zorlanma, gece aniden uyanma, zihin dinginliğinin olmaması ve hafif göğüs çarpıntısı yakınması mevcut.",
+                tongue: "Soluk gövde, ince beyaz pas.",
+                pulse: "İnce (Thready / Xi) ve zayıf.",
+                diagnosis: "Kalp ve Dalak Kan Eksikliği (Heart & Spleen Blood Deficiency)",
+                points: "HT7 (Shenmen), SP6 (Sanyinjiao), PC6 (Neiguan), Anmian, BL15 (Xinshu)",
+                notes: "HT7 ve Anmian noktaları zihni sakinleştirmek (Shen dengesi) için iğnelendi. SP6 ile Kan ve Yin üretimi desteklendi."
+            }
+        ];
+
+        // Vakaları Supabase'den Çekme
+        async function fetchCases() {
+            const { data, error } = await supabaseClient
+                .from('cases')
+                .select('*')
+                .order('id', { ascending: false });
+
+            if (error || !data || data.length === 0) {
+                allCasesData = initialDefaultCases;
+            } else {
+                allCasesData = data;
+            }
+            
+            renderCases(allCasesData);
+        }
+
+        // Vakaları Ekrana Yazdırma (Açılır-Kapanır Katlanabilir Yapı)
+        function renderCases(cases) {
+            const container = document.getElementById('caseList');
+            container.innerHTML = '';
+
+            if (cases.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#7f8c8d;">Aranan kriterlere uygun vaka bulunamadı.</p>';
+                return;
+            }
+
+            cases.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'case-card';
+
+                card.innerHTML = `
+                    <div class="case-header" onclick="toggleCase(${index})">
+                        <h2 class="case-title">${escapeHtml(item.title)}</h2>
+                        <span class="toggle-icon" id="icon-${index}">➕</span>
+                    </div>
+                    <div class="case-content" id="content-${index}">
+                        ${item.patient ? `<p class="case-detail"><strong>👤 Hasta Öyküsü:</strong> ${escapeHtml(item.patient)}</p>` : ''}
+                        
+                        ${(item.tongue || item.pulse) ? `
+                            <div class="exam-box">
+                                ${item.tongue ? `<div><strong>👅 Dil:</strong> ${escapeHtml(item.tongue)}</div>` : ''}
+                                ${item.pulse ? `<div style="margin-top:4px;"><strong>💓 Nabız:</strong> ${escapeHtml(item.pulse)}</div>` : ''}
+                            </div>
+                        ` : ''}
+
+                        ${item.diagnosis ? `<p class="case-detail"><strong>🩺 TCM Teşhisi:</strong> ${escapeHtml(item.diagnosis)}</p>` : ''}
+                        <p class="case-detail"><strong>📍 Uygulanan Noktalar:</strong><br><span class="points-box">${escapeHtml(item.points)}</span></p>
+                        ${item.notes ? `<p class="case-detail"><strong>💡 Klinik Notlar:</strong> ${escapeHtml(item.notes)}</p>` : ''}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Kart Aç/Kapat Fonksiyonu
+        function toggleCase(index) {
+            const content = document.getElementById(`content-${index}`);
+            const icon = document.getElementById(`icon-${index}`);
+
+            if (content.style.display === "block") {
+                content.style.display = "none";
+                icon.innerText = "➕";
+            } else {
+                content.style.display = "block";
+                icon.innerText = "➖";
+            }
+        }
+
+        // Arama/Filtreleme Fonksiyonu
+        function filterCases() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            const filtered = allCasesData.filter(item => {
+                return (item.title && item.title.toLowerCase().includes(query)) ||
+                       (item.patient && item.patient.toLowerCase().includes(query)) ||
+                       (item.diagnosis && item.diagnosis.toLowerCase().includes(query)) ||
+                       (item.points && item.points.toLowerCase().includes(query)) ||
+                       (item.tongue && item.tongue.toLowerCase().includes(query)) ||
+                       (item.pulse && item.pulse.toLowerCase().includes(query));
+            });
+
+            renderCases(filtered);
+        }
+
+        // Yeni Vaka Ekleme
+        async function addNewCase() {
+            const title = document.getElementById('title').value.trim();
+            const patient = document.getElementById('patient').value.trim();
+            const tongue = document.getElementById('tongue').value.trim();
+            const pulse = document.getElementById('pulse').value.trim();
+            const diagnosis = document.getElementById('diagnosis').value.trim();
+            const points = document.getElementById('points').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!title || !points) {
+                alert('Lütfen en azından Vaka Başlığı ve Noktalar alanlarını doldurun.');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('cases')
+                .insert([{ title, patient, tongue, pulse, diagnosis, points, notes }]);
+
+            if (error) {
+                alert('Ekleme Hatası: ' + error.message + '\n\nNot: Supabase "cases" tablosuna tongue ve pulse sütunlarını eklediğinizden emin olun.');
+                return;
+            }
+
+            // Formu Temizle
+            document.getElementById('title').value = '';
+            document.getElementById('patient').value = '';
+            document.getElementById('tongue').value = '';
+            document.getElementById('pulse').value = '';
+            document.getElementById('diagnosis').value = '';
+            document.getElementById('points').value = '';
+            document.getElementById('notes').value = '';
+
+            fetchCases();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        fetchCases();
+    </script>
+</body>
+</html>
