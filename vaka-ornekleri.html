@@ -205,6 +205,24 @@
             margin-top: 6px;
             font-size: 0.9rem;
         }
+        /* Vaka paylaşım formu katlanabilir alan */
+        .add-case-card { padding: 0; }
+        .case-form-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px; border:0; background:transparent; cursor:pointer; text-align:left; color:var(--primary-color); font:inherit; font-size:1.2rem; font-weight:700; }
+        .case-form-toggle:hover { background:#f7faf9; }
+        .case-form-toggle .toggle-indicator { font-size:1.4rem; color:var(--accent-color); }
+        .case-form-body { padding:0 20px 20px; }
+        .case-form-body[hidden], .session-form[hidden] { display:none !important; }
+        .session-section { margin-top:20px; border-top:1px solid #e6eaed; padding-top:14px; }
+        .session-section h4 { margin:0 0 12px; color:var(--primary-color); }
+        .session-item { border-left:4px solid var(--accent-color); padding:10px 12px; background:#f3faf8; border-radius:7px; margin:10px 0; overflow-wrap:anywhere; }
+        .session-item p { margin:5px 0; white-space:pre-wrap; }
+        .session-toggle { border:0; border-radius:7px; background:var(--primary-color); color:white; padding:9px 12px; cursor:pointer; font:inherit; }
+        .session-form { margin-top:12px; padding:14px; background:#f8fafb; border:1px solid #dce5e9; border-radius:9px; }
+        .session-form input, .session-form textarea { width:100%; padding:10px 12px; border:1px solid #ccc; border-radius:8px; font:inherit; }
+        .session-form label { display:block; font-weight:600; font-size:.88rem; margin:8px 0 4px; }
+        .session-form .btn-add { margin-top:12px; }
+        .session-notice { font-size:.88rem; color:#7f8c8d; margin:8px 0; }
+        @media(max-width:600px) { .form-row { flex-direction:column; gap:0; } }
     </style>
 </head>
 <body>
@@ -221,7 +239,10 @@
 
     <!-- Yeni Vaka Ekleme Alanı -->
     <div class="add-case-card">
-        <h3>➕ Yeni Vaka Örneği Paylaş</h3>
+        <button type="button" class="case-form-toggle" id="caseFormToggle" aria-expanded="false" aria-controls="caseFormBody" onclick="toggleCaseForm()">
+            <span>➕ Yeni Vaka Örneği Paylaş</span><span class="toggle-indicator" id="caseFormIndicator">⌄</span>
+        </button>
+        <div class="case-form-body" id="caseFormBody" hidden>
         <div class="form-group">
             <label for="title">Vaka Başlığı / Rahatsızlık:</label>
             <input type="text" id="title" placeholder="Örn: Vaka - Şiddetli Migren ve Mide Bulantısı">
@@ -256,6 +277,7 @@
             <textarea id="notes" rows="2" placeholder="Örn: Dört Kapı noktaları ile Qi akışı düzenlendi..."></textarea>
         </div>
         <button class="btn-add" onclick="addNewCase()">Vakayı Veritabanına Ekle</button>
+        </div>
     </div>
 
     <!-- Vakaların Listeleneceği Alan -->
@@ -270,6 +292,112 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allCasesData = []; // Arama filtresi için tüm verileri saklayan dizi
+        let allSessionsData = [];
+
+        function toggleCaseForm() {
+            const body = document.getElementById('caseFormBody');
+            const button = document.getElementById('caseFormToggle');
+            body.hidden = !body.hidden;
+            button.setAttribute('aria-expanded', String(!body.hidden));
+            document.getElementById('caseFormIndicator').textContent = body.hidden ? '⌄' : '⌃';
+        }
+
+        async function fetchSessions() {
+            const {data, error} = await supabaseClient.from('case_sessions')
+                .select('*').order('session_number', {ascending:true});
+            if (error) {
+                console.warn('Seans kayıtları yüklenemedi:', error.message);
+                allSessionsData = [];
+                return;
+            }
+            allSessionsData = data || [];
+        }
+
+        function formatDate(value) {
+            if (!value) return '';
+            const [year,month,day] = value.slice(0,10).split('-');
+            return `${day}.${month}.${year}`;
+        }
+
+        function sessionMarkup(item, index) {
+            if (item.id === undefined || item.id === null) {
+                return '<div class="session-section"><p class="session-notice">Örnek vaka: Seans kaydı için vakayı önce veritabanına ekleyin.</p></div>';
+            }
+            const sessions = allSessionsData.filter(s => String(s.case_id) === String(item.id));
+            const list = sessions.length ? sessions.map(s => `
+                <div class="session-item">
+                    <strong>${escapeHtml(String(s.session_number))}. Seans — ${escapeHtml(formatDate(s.session_date))}</strong>
+                    ${s.points ? `<p><strong>📍 Noktalar:</strong> ${escapeHtml(s.points)}</p>` : ''}
+                    ${s.notes ? `<p><strong>📝 Seans Notları:</strong> ${escapeHtml(s.notes)}</p>` : ''}
+                    ${s.response ? `<p><strong>📈 Hasta Yanıtı:</strong> ${escapeHtml(s.response)}</p>` : ''}
+                </div>`).join('') : '<p class="session-notice">Henüz seans eklenmedi.</p>';
+            const next = Math.max(0,...sessions.map(s => Number(s.session_number)||0)) + 1;
+            return `<div class="session-section">
+                <h4>📅 Tedavi Seansları (${sessions.length})</h4>
+                ${list}
+                <button type="button" class="session-toggle" onclick="toggleSessionForm(${index})" aria-expanded="false" id="session-toggle-${index}">+ Seans Ekle</button>
+                <form class="session-form" id="session-form-${index}" hidden onsubmit="saveSession(event, ${index})">
+                    <label for="session-number-${index}">Seans Numarası</label>
+                    <input id="session-number-${index}" type="number" min="1" step="1" value="${next}" required>
+                    <label for="session-date-${index}">Seans Tarihi</label>
+                    <input id="session-date-${index}" type="date" required>
+                    <label for="session-points-${index}">Uygulanan Noktalar</label>
+                    <input id="session-points-${index}" type="text" placeholder="Örn: LV3, GB20">
+                    <label for="session-notes-${index}">Tedavi / Seans Notları</label>
+                    <textarea id="session-notes-${index}" rows="2"></textarea>
+                    <label for="session-response-${index}">Hastanın Yanıtı / Değişim</label>
+                    <textarea id="session-response-${index}" rows="2"></textarea>
+                    <button type="submit" class="btn-add">Seansı Kaydet</button>
+                    <p class="session-notice" id="session-message-${index}" role="status"></p>
+                </form>
+            </div>`;
+        }
+
+        function toggleSessionForm(index) {
+            const form = document.getElementById(`session-form-${index}`);
+            const button = document.getElementById(`session-toggle-${index}`);
+            form.hidden = !form.hidden;
+            button.setAttribute('aria-expanded', String(!form.hidden));
+            button.textContent = form.hidden ? '+ Seans Ekle' : '− Seans Formunu Kapat';
+            if (!form.hidden && !document.getElementById(`session-date-${index}`).value) {
+                document.getElementById(`session-date-${index}`).value = new Date().toLocaleDateString('en-CA');
+            }
+        }
+
+        async function saveSession(event, index) {
+            event.preventDefault();
+            const item = displayedCases[index];
+            if (!item || item.id == null) return;
+            const status = document.getElementById(`session-message-${index}`);
+            const button = event.target.querySelector('button[type="submit"]');
+            button.disabled = true;
+            status.textContent = 'Kaydediliyor...';
+            try {
+                const {data: {user}, error:authError} = await supabaseClient.auth.getUser();
+                if (authError || !user) {
+                    status.textContent = 'Seans kaydetmek için önce Spot Bilgiler sayfasından kullanıcı girişi yapın.';
+                    return;
+                }
+                const payload = {
+                    case_id: item.id,
+                    session_number: Number(document.getElementById(`session-number-${index}`).value),
+                    session_date: document.getElementById(`session-date-${index}`).value,
+                    points: document.getElementById(`session-points-${index}`).value.trim(),
+                    notes: document.getElementById(`session-notes-${index}`).value.trim(),
+                    response: document.getElementById(`session-response-${index}`).value.trim()
+                };
+                const {error} = await supabaseClient.from('case_sessions').insert(payload);
+                if (error) { status.textContent = 'Seans kaydedilemedi: ' + error.message; return; }
+                await fetchSessions();
+                renderCases(displayedCases);
+            } catch (error) {
+                status.textContent = 'Hata: ' + error.message;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        let displayedCases = [];
 
         // Örnek / Varsayılan Vaka Listesi
         const initialDefaultCases = [
@@ -315,11 +443,13 @@
                 allCasesData = data;
             }
             
+            await fetchSessions();
             renderCases(allCasesData);
         }
 
         // Vakaları Ekrana Yazdırma (Açılır-Kapanır Katlanabilir Yapı)
         function renderCases(cases) {
+            displayedCases = cases;
             const container = document.getElementById('caseList');
             container.innerHTML = '';
 
@@ -350,6 +480,7 @@
                         ${item.diagnosis ? `<p class="case-detail"><strong>🩺 TCM Teşhisi:</strong> ${escapeHtml(item.diagnosis)}</p>` : ''}
                         <p class="case-detail"><strong>📍 Uygulanan Noktalar:</strong><br><span class="points-box">${escapeHtml(item.points)}</span></p>
                         ${item.notes ? `<p class="case-detail"><strong>💡 Klinik Notlar:</strong> ${escapeHtml(item.notes)}</p>` : ''}
+                        ${sessionMarkup(item, index)}
                     </div>
                 `;
 
