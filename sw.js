@@ -1,43 +1,92 @@
-const CACHE_NAME = "tcm-flashcards-v2"; // Versiyonu v2 yaptık (telefon güncellemeyi algılasın diye)
+
+const CACHE_NAME = "tcm-flashcards-v3";
 
 const ASSETS = [
   "./",
   "./index.html",
-  "./vaka-ornekleri.html", // Yeni eklenen vaka örnekleri sayfası
+  "./vaka-ornekleri.html",
+  "./spot-bilgiler.html",
   "./manifest.json",
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+  "./flashcardLogo-512x512.png"
 ];
 
-// Service Worker Yüklenme (Install)
+// Kurulum
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(ASSETS)
+    )
   );
-  self.skipWaiting(); // Yeni Service Worker'ı hemen aktif et
+
+  self.skipWaiting();
 });
 
-// Yeni Service Worker Aktif Olduğunda Eski Önbellekleri (v1 vb.) Silme
+// Eski uygulama önbelleklerini temizle
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log("Eski önbellek temizleniyor:", cache);
-            return caches.delete(cache);
-          }
-        })
+    (async () => {
+      const keys = await caches.keys();
+
+      await Promise.all(
+        keys
+          .filter((key) =>
+            key.startsWith("tcm-flashcards-") &&
+            key !== CACHE_NAME
+          )
+          .map((key) => caches.delete(key))
       );
-    })
+
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim(); // Kontrolü hemen ele al
 });
 
-// İstek Yakalama (Fetch)
+// HTML sayfalarında önce internetten güncel sürümü al
 self.addEventListener("fetch", (event) => {
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+
+  // Supabase ve diğer harici istekleri önbelleğe alma
+  if (url.origin !== self.location.origin) return;
+
+  const isHTML =
+    request.mode === "navigate" ||
+    url.pathname.endsWith(".html");
+
+  if (isHTML) {
+    event.respondWith(
+      (async () => {
+        try {
+          const response = await fetch(request);
+
+          if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, response.clone());
+          }
+
+          return response;
+        } catch (error) {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+
+          throw error;
+        }
+      })()
+    );
+    return;
+  }
+
+  // Diğer yerel dosyalarda önce önbellek
   event.respondWith(
-    caches
-      .match(event.request)
-      .then((response) => response || fetch(event.request))
+    (async () => {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+
+      const response = await fetch(request);
+      return response;
+    })()
   );
 });
