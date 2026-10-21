@@ -5,9 +5,9 @@
 <dialog id="signupDialog"><form id="signupForm"><h2>Yeni Hesap Oluştur</h2><p class="muted">Kayıt olan herkes kart ekleyebilir. Yalnızca kendi kartlarını düzenleyebilir ve silebilir.</p><label>E-posta<input id="signupEmail" type="email" required autocomplete="email"></label><label>Şifre (en az 8 karakter)<input id="signupPassword" type="password" required minlength="8" autocomplete="new-password"></label><label>Şifreyi tekrar yaz<input id="signupConfirm" type="password" required minlength="8" autocomplete="new-password"></label><p id="signupNotice" role="status" class="muted"></p><div class="actions"><button id="signupSubmit" type="submit">Hesap Oluştur</button><button type="button" class="ghost" id="cancelSignup">İptal</button></div></form></dialog>
 <dialog id="editDialog"><form id="editForm"><h2 id="formHeading">Yeni Spot Kart</h2><input id="cardId" type="hidden"><label>Başlık<input id="title" maxlength="160" required></label><label>Kategori<select id="category" required><option>TCM Temelleri</option><option>Meridyenler</option><option>Akupunktur Noktaları</option><option>Özel Noktalar</option><option>Tanı Bilgileri</option><option>Kulak Akupunkturu</option><option>Diğer</option></select></label><label>Spot bilgi<textarea id="summary" required></textarea></label><label>Detay<textarea id="details"></textarea></label><label>Görsel URL (isteğe bağlı)<input id="imageUrl" type="url" placeholder="https://..."></label><label>Kaynak<input id="source" maxlength="300"></label><div class="actions"><button type="submit">Kaydet</button><button type="button" class="ghost" id="cancelEdit">İptal</button></div></form></dialog>
 <script>
-const URL='https://erfyniehogwftgvxcufn.supabase.co';
-const KEY='sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
-const db=window.supabase.createClient(URL,KEY);
+const SUPABASE_URL = 'https://erfyniehogwftgvxcufn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-kwcactSSCJmj5VA-Xdleg_8Dt-hSwy';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $=id=>document.getElementById(id);let cards=[],isAdmin=false,currentUser=null;
 function msg(s){$('message').textContent=s||''}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
